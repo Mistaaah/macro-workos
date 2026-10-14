@@ -32,6 +32,9 @@
 **/target
 **/dist
 **/build
+# Rust has a source module directory named src/build; keep those sources in image contexts.
+!**/src/build
+!**/src/build/**
 **/.wrangler
 **/test-results
 **/playwright-report
