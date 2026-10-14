@@ -13,7 +13,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends git && \
 WORKDIR /workspace/apps/web
 ENV VITE_LOCAL_SERVERS=ALL
 ENV VITE_LOCAL_BACKEND_ORIGIN=same-origin
-RUN bun run build --mode development
+RUN bunx vite build -c vite.config.ts --mode development && \
+  bun run postbuild:semver && \
+  bun run postbuild:bundle-manifest
 
 FROM caddy:2.10.2-alpine AS runner
 COPY --from=webbuild /workspace/apps/web/dist /srv/app
