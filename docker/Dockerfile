@@ -6,7 +6,6 @@ WORKDIR /app
 
 FROM chef AS builder
 ARG SERVICE_NAME
-ARG RAILWAY_SERVICE_ID
 
 # cmake is needed to compile librdkafka (via rdkafka-sys, pulled in
 # transitively by workspace-hack for every binary) from source; rust:latest
@@ -17,10 +16,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends cmake && \
 COPY . .
 
 # Build the service
-RUN --mount=type=cache,id=s/${RAILWAY_SERVICE_ID}-cargo-registry,target=/usr/local/cargo/registry,sharing=shared \
-  --mount=type=cache,id=s/${RAILWAY_SERVICE_ID}-cargo-git,target=/usr/local/cargo/git/db,sharing=shared \
-  --mount=type=cache,id=s/${RAILWAY_SERVICE_ID}-rust-target-release,target=/app/target,sharing=locked \
-  cargo build --release --bin ${SERVICE_NAME} && \
+RUN cargo build --release --bin ${SERVICE_NAME} && \
   strip /app/target/release/${SERVICE_NAME} && \
   cp /app/target/release/${SERVICE_NAME} /app/svc
 
