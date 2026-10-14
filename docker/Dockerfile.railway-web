@@ -1,0 +1,23 @@
+# Build Macro's public web GUI with same-origin backend routing so it can be
+# served behind Railway's single public domain.
+FROM oven/bun:1.3.5-debian AS webbuild
+WORKDIR /workspace
+COPY . .
+RUN apt-get update && apt-get install -y --no-install-recommends git && \
+  rm -rf /var/lib/apt/lists/* && \
+  git init && \
+  git add -A && \
+  git -c user.name=Railway -c user.email=railway@example.invalid commit -m "Railway source snapshot" && \
+  bun install --frozen-lockfile
+
+WORKDIR /workspace/apps/web
+ENV VITE_LOCAL_SERVERS=ALL
+ENV VITE_LOCAL_BACKEND_ORIGIN=same-origin
+RUN bun run build --mode development
+
+FROM caddy:2.10.2-alpine AS runner
+COPY --from=webbuild /workspace/apps/web/dist /srv/app
+COPY docker/Caddyfile.railway-web /etc/caddy/Caddyfile
+ENV PORT=8080
+EXPOSE 8080
+CMD ["caddy", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]

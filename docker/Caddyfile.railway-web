@@ -1,0 +1,21 @@
+:{$PORT:8080} {
+	@health path /healthz
+	handle @health {
+		respond "ok" 200
+	}
+
+	redir / /app/ 302
+
+	handle /auth {
+		reverse_proxy macro-workos.railway.internal:8080
+	}
+	handle_path /auth/* {
+		reverse_proxy macro-workos.railway.internal:8080
+	}
+
+	handle /app/* {
+		root * /srv
+		try_files {path} /app/index.html
+		file_server
+	}
+}
