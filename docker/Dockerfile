@@ -16,8 +16,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends cmake && \
 COPY . .
 
 # Build the service
-RUN --mount=type=cache,target=/usr/local/cargo/registry,sharing=shared \
-  --mount=type=cache,target=/usr/local/cargo/git/db,sharing=shared \
+RUN --mount=type=cache,id=cargo-registry,target=/usr/local/cargo/registry,sharing=shared \
+  --mount=type=cache,id=cargo-git,target=/usr/local/cargo/git/db,sharing=shared \
   --mount=type=cache,target=/app/target,id=rust-target-release,sharing=locked \
   cargo build --release --bin ${SERVICE_NAME} && \
   strip /app/target/release/${SERVICE_NAME} && \
