@@ -49,6 +49,13 @@ pub fn queue_url(queue: &str) -> String {
     format!("http://localstack:4566/{ACCOUNT_ID}/{queue}")
 }
 
+/// Build a queue URL using the endpoint that the provisioner itself can reach.
+/// Used by the initializer when it runs inside LocalStack, where the Compose
+/// hostname `localstack` is not available.
+pub fn queue_url_for_endpoint(endpoint: &str, queue: &str) -> String {
+    format!("{}/{ACCOUNT_ID}/{queue}", endpoint.trim_end_matches('/'))
+}
+
 /// The ARN for `queue`.
 pub fn queue_arn(queue: &str) -> String {
     format!("arn:aws:sqs:us-east-1:{ACCOUNT_ID}:{queue}")

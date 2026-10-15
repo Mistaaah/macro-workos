@@ -34,7 +34,7 @@ async fn provision_async(url: &str) -> Result<()> {
 
     // The four groups are independent — run them concurrently.
     let (q, t, b, k) = tokio::join!(
-        create_queues(&sqs),
+        create_queues(&sqs, url),
         create_tables(&ddb),
         create_buckets(&s3),
         create_kms_keys(&kms)
@@ -45,7 +45,7 @@ async fn provision_async(url: &str) -> Result<()> {
     k?;
 
     // Dependent: wire doc-storage ObjectCreated -> document-upload-finalizer-queue.
-    wire_upload_finalizer(&sqs, &s3).await?;
+    wire_upload_finalizer(&sqs, &s3, url).await?;
     Ok(())
 }
 
@@ -115,7 +115,7 @@ async fn create_kms_keys(kms: &aws_sdk_kms::Client) -> Result<()> {
     Ok(())
 }
 
-async fn create_queues(sqs: &aws_sdk_sqs::Client) -> Result<()> {
+async fn create_queues(sqs: &aws_sdk_sqs::Client, endpoint: &str) -> Result<()> {
     for queue in resources::QUEUES {
         let name = queue.name;
         let mut request = sqs.create_queue().queue_name(name);
@@ -131,7 +131,7 @@ async fn create_queues(sqs: &aws_sdk_sqs::Client) -> Result<()> {
             continue;
         }
         sqs.set_queue_attributes()
-            .queue_url(resources::queue_url(queue.name))
+            .queue_url(resources::queue_url_for_endpoint(endpoint, queue.name))
             .set_attributes(Some(attributes))
             .send()
             .await
@@ -263,8 +263,12 @@ async fn create_tables(ddb: &aws_sdk_dynamodb::Client) -> Result<()> {
 
 /// Configure doc-storage S3 ObjectCreated events to publish to the upload
 /// finalizer SQS queue (mirrors `tooling/just/local_stack.just`).
-async fn wire_upload_finalizer(sqs: &aws_sdk_sqs::Client, s3: &aws_sdk_s3::Client) -> Result<()> {
-    let queue_url = resources::queue_url(resources::UPLOAD_FINALIZER_QUEUE);
+async fn wire_upload_finalizer(
+    sqs: &aws_sdk_sqs::Client,
+    s3: &aws_sdk_s3::Client,
+    endpoint: &str,
+) -> Result<()> {
+    let queue_url = resources::queue_url_for_endpoint(endpoint, resources::UPLOAD_FINALIZER_QUEUE);
     let queue_arn = resources::queue_arn(resources::UPLOAD_FINALIZER_QUEUE);
     let source_arn = format!("arn:aws:s3:::{}", resources::DOC_STORAGE_BUCKET);
 
