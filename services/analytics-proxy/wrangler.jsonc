@@ -26,6 +26,7 @@
   },
   "env": {
     "local": {
+      "main": "src/index.ts",
       "ratelimits": [
         {
           "name": "RATE_LIMITER",
