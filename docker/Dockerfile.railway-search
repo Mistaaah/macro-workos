@@ -15,7 +15,9 @@ RUN if command -v runuser >/dev/null 2>&1; then \
       rm -rf /var/lib/apt/lists/*; \
     else \
       echo "No supported package manager can install runuser" >&2; exit 1; \
-    fi
+    fi && \
+    runuser_path="$(command -v runuser || find /usr/sbin /sbin -type f -name runuser -print -quit)" && \
+    test -n "$runuser_path" && ln -sf "$runuser_path" /usr/local/bin/runuser
 COPY docker/railway-opensearch-entrypoint.sh /usr/local/bin/railway-opensearch-entrypoint.sh
 RUN chmod 755 /usr/local/bin/railway-opensearch-entrypoint.sh
 
