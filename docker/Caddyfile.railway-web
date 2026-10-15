@@ -17,7 +17,7 @@
 	}
 
 	@connection_gateway path /connection-gateway /connection-gateway/*
-	handle_path @connection_gateway {
+	handle @connection_gateway {
 		reverse_proxy connection-gateway.railway.internal:8080
 	}
 	handle_path /dss/* {
