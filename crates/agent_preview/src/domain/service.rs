@@ -68,6 +68,9 @@ pub enum PreviewError {
     /// Invalid input.
     #[error("invalid preview request")]
     Invalid,
+    /// Invalid server deployment setting. The field name is safe to include in logs.
+    #[error("invalid preview gateway setting: {0}")]
+    InvalidSettings(&'static str),
     /// Unknown, expired, revoked, or otherwise unauthorized credential.
     #[error("preview access denied")]
     Denied,
@@ -119,14 +122,14 @@ impl Settings {
                 })
         }
         let key: Vec<_> = self.host_key.split_whitespace().collect();
-        let app = url::Url::parse(&self.app_origin).map_err(|_| PreviewError::Invalid)?;
-        let app_host = app.host_str().ok_or(PreviewError::Invalid)?;
+        let app = url::Url::parse(&self.app_origin)
+            .map_err(|_| PreviewError::InvalidSettings("PREVIEW_APP_ORIGIN"))?;
+        let app_host = app
+            .host_str()
+            .ok_or(PreviewError::InvalidSettings("PREVIEW_APP_ORIGIN"))?;
         let local = self.domain == "preview.localhost"
             && (app.scheme() == "https" || (app.scheme() == "http" && app_host == "localhost"));
         if !host(&self.domain)
-            || !host(&self.ssh_host)
-            || self.ssh_port == 0
-            || self.https_port == 0
             || self.domain == "macro.com"
             || self.domain.ends_with(".macro.com")
             || self.domain == app_host
@@ -137,20 +140,40 @@ impl Settings {
             // CA's HTTPS listener. Local stacks may also use a machine hostname.
             || app_host.ends_with(&format!(".{}", self.domain))
             || (!local && self.domain.ends_with(&format!(".{app_host}")))
-            || (app.scheme() != "https" && !local)
-            || (self.local_ssh_fallback && !local)
-            || self
-                .ssh_proxy_host
-                .as_ref()
-                .is_some_and(|proxy| !local || !host(proxy))
+        {
+            return Err(PreviewError::InvalidSettings("PREVIEW_DOMAIN"));
+        }
+        if !host(&self.ssh_host) {
+            return Err(PreviewError::InvalidSettings("PREVIEW_SSH_HOST"));
+        }
+        if self.ssh_port == 0 {
+            return Err(PreviewError::InvalidSettings("PREVIEW_SSH_PUBLIC_PORT"));
+        }
+        if self.https_port == 0 {
+            return Err(PreviewError::InvalidSettings("PREVIEW_HTTPS_PORT"));
+        }
+        if (app.scheme() != "https" && !local)
             || app.origin().ascii_serialization() != self.app_origin
-            || key.len() != 2
+        {
+            return Err(PreviewError::InvalidSettings("PREVIEW_APP_ORIGIN"));
+        }
+        if self.local_ssh_fallback && !local {
+            return Err(PreviewError::InvalidSettings("ENVIRONMENT"));
+        }
+        if self
+            .ssh_proxy_host
+            .as_ref()
+            .is_some_and(|proxy| !local || !host(proxy))
+        {
+            return Err(PreviewError::InvalidSettings("PREVIEW_SSH_PROXY_HOST"));
+        }
+        if key.len() != 2
             || key[0] != "ssh-ed25519"
             || base64::engine::general_purpose::STANDARD
-                .decode(key[1])
+                .decode(key.get(1).copied().unwrap_or_default())
                 .is_err()
         {
-            return Err(PreviewError::Invalid);
+            return Err(PreviewError::InvalidSettings("PREVIEW_SSH_HOST_KEY"));
         }
         Ok(())
     }

@@ -18,6 +18,7 @@ impl IntoResponse for PreviewError {
     fn into_response(self) -> Response {
         let status = match self {
             Self::Invalid => StatusCode::BAD_REQUEST,
+            Self::InvalidSettings(_) => StatusCode::INTERNAL_SERVER_ERROR,
             Self::Denied => StatusCode::FORBIDDEN,
             Self::Offline => StatusCode::GONE,
             Self::Limited => StatusCode::TOO_MANY_REQUESTS,
