@@ -16,10 +16,12 @@ pub mod project;
 
 pub type Result<T> = std::result::Result<T, error::OpensearchClientError>;
 
+use anyhow::Context;
+use base64::{Engine as _, engine::general_purpose::STANDARD};
 use opensearch::{
     OpenSearch,
     auth::Credentials,
-    cert::CertificateValidation,
+    cert::{Certificate, CertificateValidation},
     http::{
         Url,
         transport::{SingleNodeConnectionPool, TransportBuilder},
@@ -43,10 +45,24 @@ impl OpensearchClient {
         let credentials = Credentials::Basic(opensearch_username, opensearch_password);
         let conn_pool = SingleNodeConnectionPool::new(url);
 
-        let cert_validation = if opensearch_url.contains("https://localhost") {
-            CertificateValidation::None
-        } else {
-            CertificateValidation::Default
+        let cert_validation = match std::env::var("OPENSEARCH_CA_CERT_B64") {
+            Ok(encoded_ca) => {
+                let ca_pem = STANDARD
+                    .decode(encoded_ca.trim())
+                    .context(
+                        "OPENSEARCH_CA_CERT_B64 must contain a base64-encoded PEM CA certificate",
+                    )?;
+                let ca = Certificate::from_pem(&ca_pem)
+                    .context("OPENSEARCH_CA_CERT_B64 must contain a valid PEM CA certificate")?;
+                CertificateValidation::Full(ca)
+            }
+            Err(std::env::VarError::NotPresent)
+                if opensearch_url.contains("https://localhost") =>
+            {
+                CertificateValidation::None
+            }
+            Err(std::env::VarError::NotPresent) => CertificateValidation::Default,
+            Err(error) => return Err(error).context("failed to read OPENSEARCH_CA_CERT_B64"),
         };
         let transport = TransportBuilder::new(conn_pool)
             .auth(credentials)
