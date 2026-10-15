@@ -35,6 +35,9 @@
 # Rust has a source module directory named src/build; keep those sources in image contexts.
 !**/src/build
 !**/src/build/**
+# xtask_local's build helper is also source, despite the generic `build` rule.
+!**/src/local/build
+!**/src/local/build/**
 **/.wrangler
 **/test-results
 **/playwright-report

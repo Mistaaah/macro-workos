@@ -17,6 +17,7 @@ WORKDIR /app/services/analytics-proxy
 # include the Worker source and wrangler.jsonc in the image. In local Compose
 # this path is still overlaid by the repository bind mount.
 COPY services/analytics-proxy/ /app/services/analytics-proxy/
+RUN ln -s /opt/analytics-proxy/node_modules /app/services/analytics-proxy/node_modules
 EXPOSE 8098
 
 # The repo is bind-mounted at /app (see docker-compose.yml), while Wrangler and
