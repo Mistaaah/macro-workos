@@ -13,6 +13,11 @@
 		reverse_proxy macro-workos.railway.internal:8080
 	}
 
+	@connection_gateway path /connection-gateway*
+	handle @connection_gateway {
+		reverse_proxy connection-gateway.railway.internal:8080
+	}
+
 	handle /app/* {
 		root * /srv
 		try_files {path} /app/index.html
