@@ -1,0 +1,17 @@
+# Build Macro's idempotent LocalStack resource initializer into the official
+# LocalStack image so Railway provisions queues, tables, buckets, and KMS keys
+# every time its LocalStack volume is first created.
+FROM rust:latest AS builder
+ENV SQLX_OFFLINE=true
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends cmake && \
+  apt-get clean && rm -rf /var/lib/apt/lists/*
+
+COPY . .
+RUN cargo build --release --bin xtask_local --manifest-path tooling/xtask/crates/xtask_local/Cargo.toml && \
+  strip /app/target/release/xtask_local
+
+FROM localstack/localstack:4.14.0
+COPY --from=builder /app/target/release/xtask_local /usr/local/bin/xtask_local
+COPY --chmod=755 docker/railway-localstack-init.sh /etc/localstack/init/ready.d/30-macro-provision.sh
