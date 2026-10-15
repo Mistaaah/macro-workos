@@ -6,3 +6,4 @@ COPY docker/kafka-entrypoint.sh /usr/local/bin/railway-kafka-entrypoint.sh
 RUN chmod 755 /usr/local/bin/railway-kafka-entrypoint.sh
 
 ENTRYPOINT ["/usr/local/bin/railway-kafka-entrypoint.sh"]
+CMD ["/etc/kafka/docker/run"]
