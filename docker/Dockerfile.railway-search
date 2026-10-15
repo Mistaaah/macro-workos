@@ -4,25 +4,21 @@ FROM opensearchproject/opensearch:2.18.0
 # entrypoint as root long enough to fix the data directory ownership, then
 # drop to OpenSearch's normal unprivileged account.
 USER root
-RUN if command -v runuser >/dev/null 2>&1; then \
-      true; \
-    elif command -v yum >/dev/null 2>&1; then \
-      yum install -y shadow-utils && yum clean all; \
+RUN if command -v yum >/dev/null 2>&1; then \
+      yum install -y util-linux-user && yum clean all; \
     elif command -v dnf >/dev/null 2>&1; then \
-      dnf install -y shadow-utils && dnf clean all; \
+      dnf install -y util-linux-user && dnf clean all; \
     elif command -v apt-get >/dev/null 2>&1; then \
       apt-get update && apt-get install -y --no-install-recommends util-linux && \
       rm -rf /var/lib/apt/lists/*; \
     else \
       echo "No supported package manager can install runuser" >&2; exit 1; \
     fi && \
-    if [ -x /usr/sbin/runuser ]; then \
-      ln -sf /usr/sbin/runuser /usr/local/bin/runuser; \
-    elif [ -x /sbin/runuser ]; then \
-      ln -sf /sbin/runuser /usr/local/bin/runuser; \
-    else \
-      echo "runuser was not installed" >&2; exit 1; \
-    fi
+    runuser_path="" && \
+    for path in /usr/sbin/runuser /sbin/runuser /usr/bin/runuser /bin/runuser; do \
+      if [ -x "$path" ]; then runuser_path="$path"; break; fi; \
+    done && \
+    test -n "$runuser_path" && ln -sf "$runuser_path" /usr/local/bin/runuser
 COPY docker/railway-opensearch-entrypoint.sh /usr/local/bin/railway-opensearch-entrypoint.sh
 RUN chmod 755 /usr/local/bin/railway-opensearch-entrypoint.sh
 
