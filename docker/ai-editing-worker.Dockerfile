@@ -18,5 +18,5 @@ CMD ["sh", "-c", "\
   npx wrangler dev \
     --env local \
     --ip 0.0.0.0 \
-    --var SYNC_WS_BASE:ws://sync-service:8787\
+    --var SYNC_WS_BASE:${SYNC_WS_BASE:-ws://sync-service:8787}\
 "]
