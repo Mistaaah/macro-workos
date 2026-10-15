@@ -13,6 +13,10 @@ ENV PATH="/opt/analytics-proxy/node_modules/.bin:${PATH}"
 ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 
 WORKDIR /app/services/analytics-proxy
+# Railway builds from the repository without Compose's /app bind mount, so
+# include the Worker source and wrangler.jsonc in the image. In local Compose
+# this path is still overlaid by the repository bind mount.
+COPY services/analytics-proxy/ /app/services/analytics-proxy/
 EXPOSE 8098
 
 # The repo is bind-mounted at /app (see docker-compose.yml), while Wrangler and
