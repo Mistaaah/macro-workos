@@ -12,10 +12,54 @@
 	handle_path /auth/* {
 		reverse_proxy macro-workos.railway.internal:8080
 	}
+	handle /oauth2* {
+		reverse_proxy fusionauth.railway.internal:9011
+	}
 
-	@connection_gateway path /connection-gateway*
-	handle @connection_gateway {
+	handle_path /connection-gateway/* {
 		reverse_proxy connection-gateway.railway.internal:8080
+	}
+	handle_path /dss/* {
+		reverse_proxy document-storage-service.railway.internal:8080
+	}
+	handle_path /cognition/* {
+		reverse_proxy document-cognition-service.railway.internal:8080
+	}
+	handle_path /notification/* {
+		reverse_proxy notification-service.railway.internal:8080
+	}
+	handle_path /unfurl/* {
+		reverse_proxy unfurl-service.railway.internal:8080
+	}
+	handle_path /contacts/* {
+		reverse_proxy contacts-service.railway.internal:8080
+	}
+	handle_path /email/* {
+		reverse_proxy email-service.railway.internal:8080
+	}
+	handle_path /calendar/* {
+		reverse_proxy calendar-service.railway.internal:8080
+	}
+	handle_path /image-proxy/* {
+		reverse_proxy image-proxy-service.railway.internal:8080
+	}
+	handle_path /scheduled-action/* {
+		reverse_proxy scheduled-action.railway.internal:8080
+	}
+	handle_path /agent-harness/* {
+		reverse_proxy agent-harness-service.railway.internal:8080
+	}
+	handle_path /preview/* {
+		reverse_proxy preview-gateway.railway.internal:8080
+	}
+	handle_path /static-file/* {
+		reverse_proxy static-file-service.railway.internal:8080
+	}
+	handle_path /websocket/* {
+		reverse_proxy websocket-service.railway.internal:6969
+	}
+	handle_path /sync/* {
+		reverse_proxy sync-service.railway.internal:8787
 	}
 
 	handle /app/* {

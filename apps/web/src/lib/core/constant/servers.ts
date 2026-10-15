@@ -31,9 +31,11 @@ const gatewayHost =
     : 'https://gateway.macro.com';
 
 const authLogoutUrl =
-  import.meta.env.MODE === 'development'
-    ? 'https://fusionauth-dev.macro.com/oauth2/logout?client_id=eb75fe7a-0ef1-4186-96d9-cc62cfb1d10c&tenantId=5e13f524-8d32-0454-81f8-061936256aa4'
-    : 'https://auth.macro.com/oauth2/logout?client_id=75409999-7dc4-4241-b73b-a51818c3a71c&tenantId=a3e53c3d-8d6a-3e92-d64c-fa3bf30a60be';
+  import.meta.env.VITE_LOCAL_BACKEND_ORIGIN === 'same-origin'
+    ? `/oauth2/logout?client_id=${encodeURIComponent(import.meta.env.VITE_FUSIONAUTH_CLIENT_ID ?? '')}`
+    : import.meta.env.MODE === 'development'
+      ? 'https://fusionauth-dev.macro.com/oauth2/logout?client_id=eb75fe7a-0ef1-4186-96d9-cc62cfb1d10c&tenantId=5e13f524-8d32-0454-81f8-061936256aa4'
+      : 'https://auth.macro.com/oauth2/logout?client_id=75409999-7dc4-4241-b73b-a51818c3a71c&tenantId=a3e53c3d-8d6a-3e92-d64c-fa3bf30a60be';
 
 const directServerHostRemote = {
   'auth-service': `${gatewayHost}/auth`,
@@ -108,7 +110,7 @@ function proxyServers(): Servers | undefined {
   if (!proxyOrigin || !wsProxyOrigin) return undefined;
   return {
     'auth-service': `${proxyOrigin}/auth`,
-    'auth-logout': serverHostLocal['auth-logout'],
+    'auth-logout': authLogoutUrl,
     'pdf-service': serverHostLocal['pdf-service'], // no local container
     'document-storage-service': `${proxyOrigin}/dss`,
     'websocket-service': `${wsProxyOrigin}/websocket`,
