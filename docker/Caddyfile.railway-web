@@ -18,4 +18,8 @@
 		try_files {path} /app/index.html
 		file_server
 	}
+
+	# Do not return an empty 200 for API paths that have no backend route yet.
+	# The web client treats that as successful data and can crash while reading it.
+	respond 404
 }
