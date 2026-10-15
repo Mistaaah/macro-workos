@@ -3,6 +3,7 @@ FROM apache/kafka:3.9.1
 USER root
 RUN apk add --no-cache su-exec
 COPY docker/kafka-entrypoint.sh /usr/local/bin/railway-kafka-entrypoint.sh
+COPY .github/kafka-cluster-topics.json /usr/local/share/macro-kafka-topics.json
 RUN chmod 755 /usr/local/bin/railway-kafka-entrypoint.sh
 ENV KAFKA_LOG_DIRS=/var/lib/kafka/data/kafka
 
