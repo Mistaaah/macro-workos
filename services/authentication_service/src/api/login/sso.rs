@@ -36,7 +36,7 @@ pub(crate) struct LoginQueryParams {
 }
 
 pub(crate) fn is_allowed_original_url(url: &Url) -> bool {
-    match url.scheme() {
+    let is_builtin_allowed = match url.scheme() {
         // The app owns the custom scheme and handles all macro URI routes itself.
         "macro" => true,
         "tauri" => url.host_str() == Some("localhost"),
@@ -46,7 +46,32 @@ pub(crate) fn is_allowed_original_url(url: &Url) -> bool {
             Some("localhost" | "tauri.localhost" | "dev.macro.com" | "macro.com" | "www.macro.com")
         ),
         _ => false,
+    };
+
+    if is_builtin_allowed {
+        return true;
     }
+
+    // Self-hosted deployments must opt in to their public web origin. Parse
+    // complete HTTPS origins and compare URL origins so arbitrary paths,
+    // credentials, queries, and lookalike hostnames are never accepted.
+    std::env::var("MACRO_ALLOWED_LOGIN_ORIGINS")
+        .ok()
+        .is_some_and(|origins| {
+            origins.split(',').any(|origin| {
+                let Ok(allowed) = Url::parse(origin.trim()) else {
+                    return false;
+                };
+
+                allowed.scheme() == "https"
+                    && allowed.path() == "/"
+                    && allowed.query().is_none()
+                    && allowed.fragment().is_none()
+                    && allowed.username().is_empty()
+                    && allowed.password().is_none()
+                    && allowed.origin().ascii_serialization() == url.origin().ascii_serialization()
+            })
+        })
 }
 
 /// Strips the userinfo, query, and fragment from an `original_url` so it is
@@ -206,3 +231,4 @@ pub async fn handler(
 
     Ok(Redirect::temporary(&sso_url).into_response())
 }
+
