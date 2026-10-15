@@ -16,8 +16,13 @@ RUN if command -v runuser >/dev/null 2>&1; then \
     else \
       echo "No supported package manager can install runuser" >&2; exit 1; \
     fi && \
-    runuser_path="$(command -v runuser || find /usr/sbin /sbin -type f -name runuser -print -quit)" && \
-    test -n "$runuser_path" && ln -sf "$runuser_path" /usr/local/bin/runuser
+    if [ -x /usr/sbin/runuser ]; then \
+      ln -sf /usr/sbin/runuser /usr/local/bin/runuser; \
+    elif [ -x /sbin/runuser ]; then \
+      ln -sf /sbin/runuser /usr/local/bin/runuser; \
+    else \
+      echo "runuser was not installed" >&2; exit 1; \
+    fi
 COPY docker/railway-opensearch-entrypoint.sh /usr/local/bin/railway-opensearch-entrypoint.sh
 RUN chmod 755 /usr/local/bin/railway-opensearch-entrypoint.sh
 
