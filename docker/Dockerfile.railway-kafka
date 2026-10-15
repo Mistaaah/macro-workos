@@ -4,6 +4,7 @@ USER root
 RUN apk add --no-cache su-exec
 COPY docker/kafka-entrypoint.sh /usr/local/bin/railway-kafka-entrypoint.sh
 RUN chmod 755 /usr/local/bin/railway-kafka-entrypoint.sh
+ENV KAFKA_LOG_DIRS=/var/lib/kafka/data/kafka
 
 ENTRYPOINT ["/usr/local/bin/railway-kafka-entrypoint.sh"]
 CMD ["/etc/kafka/docker/run"]
