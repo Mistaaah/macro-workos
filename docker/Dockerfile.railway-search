@@ -1,0 +1,11 @@
+FROM opensearchproject/opensearch:2.18.0
+
+# Railway mounts persistent volumes as root-owned directories. Run the image
+# entrypoint as root long enough to fix the data directory ownership, then
+# drop to OpenSearch's normal unprivileged account.
+USER root
+COPY docker/railway-opensearch-entrypoint.sh /usr/local/bin/railway-opensearch-entrypoint.sh
+RUN chmod 755 /usr/local/bin/railway-opensearch-entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/railway-opensearch-entrypoint.sh"]
+CMD ["opensearch"]

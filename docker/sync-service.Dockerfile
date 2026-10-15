@@ -46,8 +46,8 @@ RUN cd services/sync-service/bebop && npx bebopc build
 # Build the actual application. The workspace context changes whenever a
 # dependent Rust crate changes; preserve Cargo's target cache across those
 # BuildKit layer invalidations so branch reconciliation stays incremental.
-RUN --mount=type=cache,id=macro-sync-cargo-registry,target=/usr/local/cargo/registry \
-    --mount=type=cache,id=macro-sync-cargo-target,target=/app/target \
+RUN --mount=type=cache,id=s/63c69b9e-4a6a-4b82-80e8-5f21a6edd751-/usr/local/cargo/registry,target=/usr/local/cargo/registry \
+    --mount=type=cache,id=s/63c69b9e-4a6a-4b82-80e8-5f21a6edd751-/app/target,target=/app/target \
     cd services/sync-service && worker-build --profile sync-service-release
 
 # Runtime: wrangler dev serving the prebuilt worker. Needs node + the
